@@ -52,6 +52,7 @@ class BuildBinCommand extends BuildPharCommand
      */
     protected function configure(): void
     {
+        parent::configure();
         $this->addArgument('version', InputArgument::OPTIONAL, 'Версия PHP');
 
         $this->php_version = (float)$this->config('build.php_version', PHP_VERSION);
@@ -85,8 +86,7 @@ class BuildBinCommand extends BuildPharCommand
         $customIniHeaderFile = "$this->output_dir/custominiheader.bin";
 
         // Упаковка
-        $command = new BuildPharCommand();
-        $command->execute($input, $output);
+        parent::execute($input, $output);
 
         // Загрузка micro.sfx.zip
         if (!is_file($sfxFile) && !is_file($zipFile)) {
