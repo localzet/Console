@@ -47,6 +47,8 @@ class BuildBinCommand extends BuildPharCommand
     protected string $bin_filename = 'localzet.phar';
     protected ?string $bin_file = null;
 
+    protected string $php_ini_file = '';
+
     /**
      * @return void
      */
@@ -60,6 +62,8 @@ class BuildBinCommand extends BuildPharCommand
 
         $this->bin_filename = $this->config('build.bin_filename', 'localzet.bin');
         $this->bin_file = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->bin_filename;
+
+        $this->php_ini_file = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'custominiheader.bin';
     }
 
     /**
@@ -83,7 +87,6 @@ class BuildBinCommand extends BuildPharCommand
 
         $zipFile = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $microZipFileName;
         $sfxFile = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . "php$version.micro.sfx";
-        $customIniHeaderFile = "$this->output_dir/custominiheader.bin";
 
         // Упаковка
         parent::execute($input, $output);
@@ -159,16 +162,16 @@ class BuildBinCommand extends BuildPharCommand
 
         // Пользовательский INI-файл
         if (!empty($this->php_ini)) {
-            if (file_exists($customIniHeaderFile)) {
-                unlink($customIniHeaderFile);
+            if (file_exists($this->php_ini_file)) {
+                unlink($this->php_ini_file);
             }
-            $f = fopen($customIniHeaderFile, 'wb');
+            $f = fopen($this->php_ini_file, 'wb');
             fwrite($f, "\xfd\xf6\x69\xe6");
             fwrite($f, pack('N', strlen($this->php_ini)));
             fwrite($f, $this->php_ini);
             fclose($f);
-            file_put_contents($this->bin_file, file_get_contents($customIniHeaderFile), FILE_APPEND);
-            unlink($customIniHeaderFile);
+            file_put_contents($this->bin_file, file_get_contents($this->php_ini_file), FILE_APPEND);
+            unlink($this->php_ini_file);
         }
         file_put_contents($this->bin_file, file_get_contents($this->phar_file), FILE_APPEND);
 
