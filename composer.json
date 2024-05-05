@@ -1,0 +1,36 @@
+{
+  "name": "localzet/console",
+  "description": "Localzet Console library",
+  "type": "library",
+  "keywords": [
+    "localzet",
+    "Console"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "authors": [
+    {
+      "role": "Developer",
+      "name": "Ivan Zorin",
+      "email": "creator@localzet.com",
+      "homepage": "https://github.com/localzet"
+    }
+  ],
+  "support": {
+    "email": "support@localzet.com",
+    "source": "https://github.com/localzet/Console"
+  },
+  "autoload": {
+    "psr-4": {
+      "localzet\\": "src",
+      "localzet\\Console\\": "src/Console"
+    }
+  },
+  "require": {
+    "symfony/console": ">=5.0",
+    "doctrine/inflector": "^2.0"
+  },
+  "suggest": {
+    "ext-zip": "For build bin",
+    "ext-openssl": "For build phar (Phar::OPENSSL)"
+  }
+}
