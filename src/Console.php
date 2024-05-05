@@ -7,7 +7,7 @@ declare(strict_types=1);
  * @link        https://github.com/localzet/Console
  *
  * @author      Ivan Zorin <ivan@zorin.space>
- * @copyright   Copyright (c) 2018-2024 Zorin Projects S.P.
+ * @copyright   Copyright (c) 2016-2024 Zorin Projects
  * @license     GNU Affero General Public License, version 3
  *
  *              This program is free software: you can redistribute it and/or modify
