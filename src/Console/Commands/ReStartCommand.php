@@ -6,8 +6,8 @@ declare(strict_types=1);
  * @package     Localzet Console library
  * @link        https://github.com/localzet/Console
  *
- * @author      Ivan Zorin <creator@localzet.com>
- * @copyright   Copyright (c) 2018-2024 Localzet Group
+ * @author      Ivan Zorin <ivan@zorin.space>
+ * @copyright   Copyright (c) 2018-2024 Zorin Projects S.P.
  * @license     GNU Affero General Public License, version 3
  *
  *              This program is free software: you can redistribute it and/or modify
@@ -40,8 +40,8 @@ use Throwable;
  */
 class ReStartCommand extends Command
 {
-    protected static $defaultName = 'restart';
-    protected static $defaultDescription = 'Перезапустить сервер. Используй -d для запуска в фоновом режиме. Используй -g для плавной остановки.';
+    protected static string $defaultName = 'restart';
+    protected static string $defaultDescription = 'Перезапустить сервер. Используй -d для запуска в фоновом режиме. Используй -g для плавной остановки.';
 
     protected function configure(): void
     {

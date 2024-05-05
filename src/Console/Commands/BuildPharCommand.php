@@ -31,7 +31,7 @@ class BuildPharCommand extends Command
 
     protected ?string $phar_file = null;
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->input_dir = $this->config('build.input_dir');
         $this->output_dir = $this->config('build.output_dir', '');

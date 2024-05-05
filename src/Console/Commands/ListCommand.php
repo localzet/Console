@@ -6,8 +6,8 @@ declare(strict_types=1);
  * @package     Localzet Console library
  * @link        https://github.com/localzet/Console
  *
- * @author      Ivan Zorin <creator@localzet.com>
- * @copyright   Copyright (c) 2018-2024 Localzet Group
+ * @author      Ivan Zorin <ivan@zorin.space>
+ * @copyright   Copyright (c) 2018-2024 Zorin Projects S.P.
  * @license     GNU Affero General Public License, version 3
  *
  *              This program is free software: you can redistribute it and/or modify
@@ -34,8 +34,8 @@ use Symfony\Component\Console\{Input\InputArgument, Input\InputOption};
  */
 class ListCommand extends \Symfony\Component\Console\Command\ListCommand
 {
-    protected static $defaultName = 'list';
-    protected static $defaultDescription = 'Список команд';
+    protected static string $defaultName = 'list';
+    protected static string $defaultDescription = 'Список команд';
 
     /**
      * {@inheritdoc}

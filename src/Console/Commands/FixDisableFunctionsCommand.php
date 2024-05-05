@@ -12,8 +12,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class FixDisableFunctionsCommand extends Command
 {
-    protected static $defaultName = 'fix-disable-functions';
-    protected static $defaultDescription = 'Исправление disable_functions в php.ini';
+    protected static string $defaultName = 'fix-disable-functions';
+    protected static string $defaultDescription = 'Исправление disable_functions в php.ini';
 
     /**
      * @param InputInterface $input
