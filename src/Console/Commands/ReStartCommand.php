@@ -49,6 +49,11 @@ class ReStartCommand extends Command
         $this
             ->addOption('daemon', 'd', InputOption::VALUE_NONE, 'Фоновый режим')
             ->addOption('graceful', 'g', InputOption::VALUE_NONE, 'Плавная остановка');
+
+
+        if (!class_exists('\\support\\App') && !class_exists('\\localzet\\Server')) {
+            $this->setHidden();
+        }
     }
 
     /**

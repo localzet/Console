@@ -47,6 +47,10 @@ class StatusCommand extends Command
     protected function configure(): void
     {
         $this->addOption('live', 'd', InputOption::VALUE_NONE, 'Статус в реальном времени');
+
+        if (!class_exists('\\support\\App') && !class_exists('\\localzet\\Server')) {
+            $this->setHidden();
+        }
     }
 
     /**

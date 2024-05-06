@@ -47,6 +47,10 @@ class StartCommand extends Command
     protected function configure(): void
     {
         $this->addOption('daemon', 'd', InputOption::VALUE_NONE, 'Фоновый режим');
+
+        if (!class_exists('\\support\\App') && !class_exists('\\localzet\\Server')) {
+            $this->setHidden();
+        }
     }
 
     /**

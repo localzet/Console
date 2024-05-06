@@ -48,6 +48,10 @@ class StopCommand extends Command
     {
         $this
             ->addOption('graceful', 'g', InputOption::VALUE_NONE, 'Плавная остановка');
+
+        if (!class_exists('\\support\\App') && !class_exists('\\localzet\\Server')) {
+            $this->setHidden();
+        }
     }
 
     /**

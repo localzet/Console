@@ -47,6 +47,10 @@ class ReloadCommand extends Command
     protected function configure(): void
     {
         $this->addOption('graceful', 'g', InputOption::VALUE_NONE, 'Плавная перезагрузка');
+
+        if (!class_exists('\\support\\App') && !class_exists('\\localzet\\Server')) {
+            $this->setHidden();
+        }
     }
 
     /**

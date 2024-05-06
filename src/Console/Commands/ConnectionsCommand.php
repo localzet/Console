@@ -43,6 +43,14 @@ class ConnectionsCommand extends Command
     protected static string $defaultName = 'connections';
     protected static string $defaultDescription = 'Список соединений';
 
+    protected function configure()
+    {
+
+        if (!class_exists('\\support\\App') && !class_exists('\\localzet\\Server')) {
+            $this->setHidden();
+        }
+    }
+
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
