@@ -343,6 +343,7 @@ dist
 
 # Данные сборки
 /build/
+/example/build/
 
 ### SVN ###
 .svn/
@@ -424,3 +425,6 @@ $RECYCLE.BIN/
 [._]sw[a-p]
 Session.vim
 Sessionx.vim
+
+*.phar
+*.bin
