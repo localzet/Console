@@ -102,16 +102,7 @@ class Console extends Application
                 continue;
             }
 
-            $properties = $reflection->getStaticProperties();
-            $name = $properties['defaultName'] ?? null;
-            if (!$name) {
-                throw new RuntimeException("У команды $class_name нет defaultName");
-            }
-
             $command = new $class_name($this->config);
-            $command
-                ->setName($name);
-
             $this->add($command);
         }
     }
