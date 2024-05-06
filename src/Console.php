@@ -30,6 +30,8 @@ namespace localzet;
 
 use Composer\InstalledVersions;
 use localzet\Console\Commands\Command;
+use localzet\Console\Commands\HelpCommand;
+use localzet\Console\Commands\ListCommand;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -46,14 +48,24 @@ use Symfony\Component\Console\Input\InputOption;
 class Console extends Application
 {
 
-    public function __construct(protected array $config = [])
+    public function __construct(protected array $config = [], bool $installInternalCommands = true)
     {
         parent::__construct(
             $this->config['name'] ?? 'Localzet Console',
             $this->config['version'] ?? InstalledVersions::getPrettyVersion('localzet/console')
         );
 
-        $this->installCommands(rtrim(InstalledVersions::getInstallPath('localzet/console'), '/') . '/src/Console/Commands', 'localzet\Console\Commands');
+        $installInternalCommands && $this->installInternalCommands();
+    }
+
+    public function installInternalCommands(): void
+    {
+        $this->installCommands(rtrim(InstalledVersions::getInstallPath('localzet/console'), '/') . '/src/Console/Commands', 'localzet\\Console\\Commands');
+    }
+
+    protected function getDefaultCommands(): array
+    {
+        return [new HelpCommand(), new ListCommand()];
     }
 
     /**
@@ -84,22 +96,22 @@ class Console extends Application
             if (!class_exists($class_name) || !is_a($class_name, Command::class, true)) {
                 continue;
             }
+
             $reflection = new ReflectionClass($class_name);
             if ($reflection->isAbstract()) {
                 continue;
             }
+
             $properties = $reflection->getStaticProperties();
             $name = $properties['defaultName'] ?? null;
-            $description = $properties['defaultDescription'] ?? '';
             if (!$name) {
                 throw new RuntimeException("У команды $class_name нет defaultName");
             }
 
-            $command = new $class_name();
+            $command = new $class_name($this->config);
             $command
-                ->setName($name)
-                ->setDescription($description)
-                ->setConfig($this->config);
+                ->setName($name);
+
             $this->add($command);
         }
     }

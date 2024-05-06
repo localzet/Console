@@ -42,11 +42,32 @@ class BuildPharCommand extends Command
     protected static string $defaultName = 'build:phar';
     protected static string $defaultDescription = 'Упаковать проект в PHAR';
 
-    protected string $input_dir = '';
-    protected string $output_dir = '';
+    protected ?string $input_dir = '';
+    protected ?string $output_dir = '';
 
-    protected array $exclude_files = [];
     protected string $exclude_pattern = '';
+    protected array $exclude_files = [];
+    protected array $exclude_command_files = [
+        'AppCreateCommand.php',
+        'BuildBinCommand.php',
+        'BuildPharCommand.php',
+        'DisableCommand.php',
+        'EnableCommand.php',
+        'InstallCommand.php',
+        'MakeBootstrapCommand.php',
+        'MakeCommandCommand.php',
+        'MakeControllerCommand.php',
+        'MakeMiddlewareCommand.php',
+        'MakeModelCommand.php',
+        'PluginCreateCommand.php',
+        'PluginDisableCommand.php',
+        'PluginEnableCommand.php',
+        'PluginExportCommand.php',
+        'PluginInstallCommand.php',
+        'PluginUninstallCommand.php',
+        'PluginUpdateCommand.php',
+        'UpdateCommand.php',
+    ];
 
     protected string $phar_alias = 'localzet';
     protected string $phar_filename = 'localzet.phar';
@@ -121,32 +142,7 @@ class BuildPharCommand extends Command
         $phar->buildFromDirectory($this->input_dir, $this->exclude_pattern);
 
         // Исключаем соответствующие файлы
-        $exclude_command_files = [
-            'AppCreateCommand.php',
-            'BuildBinCommand.php',
-            'BuildPharCommand.php',
-            'DisableCommand.php',
-            'EnableCommand.php',
-            'InstallCommand.php',
-            'MakeBootstrapCommand.php',
-            'MakeCommandCommand.php',
-            'MakeControllerCommand.php',
-            'MakeMiddlewareCommand.php',
-            'MakeModelCommand.php',
-            'PluginCreateCommand.php',
-            'PluginDisableCommand.php',
-            'PluginEnableCommand.php',
-            'PluginExportCommand.php',
-            'PluginInstallCommand.php',
-            'PluginUninstallCommand.php',
-            'PluginUpdateCommand.php',
-            'UpdateCommand.php',
-        ];
-        $exclude_command_files = array_map(function ($cmd_file) {
-            return rtrim(InstalledVersions::getInstallPath('localzet/console'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $cmd_file;
-        }, $exclude_command_files);
-
-        $exclude_files = array_unique(array_merge($exclude_command_files, $this->exclude_files));
+        $exclude_files = $this->getExcludeFiles();
         foreach ($exclude_files as $file) {
             if ($phar->offsetExists($file)) {
                 $phar->delete($file);
@@ -168,6 +164,22 @@ __HALT_COMPILER();
         $phar->stopBuffering();
         unset($phar);
         return self::SUCCESS;
+    }
+
+    /**
+     * @return array
+     */
+    public function getExcludeFiles(): array
+    {
+        $exclude_command_files = array_map(function ($cmd_file) {
+            if (InstalledVersions::getInstallPath('localzet/console') == InstalledVersions::getRootPackage()['install_path']) {
+                return 'src/Console/Commands/' . $cmd_file;
+            } else {
+                return 'vendor/localzet/console/src/Console/Commands/' . $cmd_file;
+            }
+        }, $this->exclude_command_files);
+
+        return array_unique(array_merge($exclude_command_files, $this->exclude_files));
     }
 
     /**

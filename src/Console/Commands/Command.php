@@ -28,19 +28,24 @@ declare(strict_types=1);
 
 namespace localzet\Console\Commands;
 
-class Command extends \Symfony\Component\Console\Command\Command
+abstract class Command extends \Symfony\Component\Console\Command\Command
 {
-    private ?array $config = [];
+    protected static string $defaultName;
+    protected static string $defaultDescription;
 
-    /**
-     * @param array|null $config
-     * @return $this
-     */
-    public function setConfig(?array $config = []): static
+    public function __construct(protected array $config = [])
     {
-        $this->config = $config;
+        parent::__construct();
+    }
 
-        return $this;
+    public static function getDefaultName(): ?string
+    {
+        return !empty(static::$defaultName) ? static::$defaultName : null;
+    }
+
+    public static function getDefaultDescription(): ?string
+    {
+        return !empty(static::$defaultDescription) ? static::$defaultDescription : null;
     }
 
     /**

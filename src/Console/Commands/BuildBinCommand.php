@@ -41,7 +41,7 @@ class BuildBinCommand extends BuildPharCommand
     protected static string $defaultName = 'build:bin';
     protected static string $defaultDescription = 'Упаковать проект в BIN';
 
-    protected float $php_version = (float)PHP_VERSION;
+    protected float $php_version = 8.2;
     protected string $php_ini = '';
 
     protected string $bin_filename = 'localzet.phar';
@@ -58,7 +58,7 @@ class BuildBinCommand extends BuildPharCommand
         $this->addArgument('version', InputArgument::OPTIONAL, 'Версия PHP');
 
         $this->php_version = (float)$this->config('build.php_version', PHP_VERSION);
-        $this->php_ini = $this->config('build.php_ini', PHP_VERSION);
+        $this->php_ini = $this->config('build.php_ini', '');
 
         $this->bin_filename = $this->config('build.bin_filename', 'localzet.bin');
         $this->bin_file = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->bin_filename;
@@ -81,6 +81,7 @@ class BuildBinCommand extends BuildPharCommand
         if (!$version) {
             $version = $this->php_version;
         }
+
         $version = $version >= 8.0 ? $version : 8.1;
         $supportZip = class_exists(ZipArchive::class);
         $microZipFileName = $supportZip ? "php$version.micro.sfx.zip" : "php$version.micro.sfx";
@@ -133,7 +134,7 @@ class BuildBinCommand extends BuildPharCommand
                 $receiveLength = strlen($bodyBuffer);
                 $percent = ceil($receiveLength * 100 / $bodyLength);
                 if ($percent != $lastPercent) {
-                    echo '[' . str_pad('', (int)$percent, '=') . '>' . str_pad('', 100 - $percent) . "$percent%]";
+                    echo '[' . str_pad('', (int)$percent, '=') . '>' . str_pad('', 100 - (int)$percent) . "$percent%]";
                     echo $percent < 100 ? "\r" : "\n";
                 }
                 $lastPercent = $percent;
