@@ -80,6 +80,8 @@ class BuildPharCommand extends Command
 
     protected function configure(): void
     {
+        if (!$this->config('build')) $this->setHidden();
+
         $this->input_dir = $this->config('build.input_dir');
         $this->output_dir = $this->config('build.output_dir', '');
 
