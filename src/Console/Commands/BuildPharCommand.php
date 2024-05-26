@@ -83,14 +83,14 @@ class BuildPharCommand extends Command
         if (!$this->config('build')) $this->setHidden();
 
         $this->input_dir = $this->config('build.input_dir');
-        $this->output_dir = $this->config('build.output_dir', '');
-
-        $this->exclude_files = $this->config('build.exclude_files', []);
-        $this->exclude_pattern = $this->config('build.exclude_pattern', '');
+        $this->output_dir = $this->config('build.output_dir', rtrim($this->input_dir, '/') . '/build');
 
         $this->phar_alias = $this->config('build.phar_alias', 'localzet');
         $this->phar_filename = $this->config('build.phar_filename', 'localzet.phar');
         $this->phar_stub = $this->config('build.phar_stub', 'master');
+
+        $this->exclude_files = $this->config('build.exclude_files', ['.env', 'LICENSE', 'composer.json', 'composer.lock', $this->config('build.phar_filename', 'localzet.phar'), $this->config('build.bin_filename', 'localzet')]);
+        $this->exclude_pattern = $this->config('build.exclude_pattern', '#^(?!.*(composer.json|/.github/|/.idea/|/.git/|/.setting/|/runtime/|/vendor-bin/|/build/))(.*)$#');
 
         $this->signature_algorithm = $this->config('build.signature_algorithm', Phar::SHA256);
         $this->private_key_file = $this->config('build.private_key_file', '');

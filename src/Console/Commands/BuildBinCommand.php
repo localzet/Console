@@ -58,9 +58,9 @@ class BuildBinCommand extends BuildPharCommand
         $this->addArgument('version', InputArgument::OPTIONAL, 'Версия PHP');
 
         $this->php_version = (float)$this->config('build.php_version', PHP_VERSION);
-        $this->php_ini = $this->config('build.php_ini', '');
+        $this->php_ini = $this->config('build.php_ini', 'memory_limit=512М');
 
-        $this->bin_filename = $this->config('build.bin_filename', 'localzet.bin');
+        $this->bin_filename = $this->config('build.bin_filename', 'localzet');
         $this->bin_file = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->bin_filename;
 
         $this->php_ini_file = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'custominiheader.bin';
@@ -82,7 +82,7 @@ class BuildBinCommand extends BuildPharCommand
             $version = $this->php_version;
         }
 
-        $version = $version >= 8.0 ? $version : 8.1;
+        $version = $version >= 8.0 ? $version : 8.2;
         $supportZip = class_exists(ZipArchive::class);
         $microZipFileName = $supportZip ? "php$version.micro.sfx.zip" : "php$version.micro.sfx";
 
