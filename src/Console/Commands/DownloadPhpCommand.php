@@ -23,7 +23,7 @@ class DownloadPhpCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $version = max($input->getArgument('version') ?? 0, 8.0);
-        $output_dir = $input->getArgument('output_dir') ?? getcwd();
+        $output_dir = $input->getArgument('output') ?? getcwd();
 
         $supportZip = class_exists(ZipArchive::class);
         $zipFileName = $supportZip ? "php-$version.zip" : "php-$version";
