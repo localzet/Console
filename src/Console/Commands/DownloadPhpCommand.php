@@ -17,7 +17,7 @@ class DownloadPhpCommand extends Command
     protected function configure()
     {
         $this->addArgument('version', InputArgument::OPTIONAL, 'Версия PHP (>=8.0)');
-        $this->addArgument('output_dir', InputArgument::OPTIONAL, 'Путь для сохранения файла');
+        $this->addArgument('output', InputArgument::OPTIONAL, 'Путь для сохранения файла');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
