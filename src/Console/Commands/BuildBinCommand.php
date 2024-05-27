@@ -78,7 +78,7 @@ class BuildBinCommand extends BuildPharCommand
         parent::execute($input, $output);
 
         $version = $input->getArgument('version') ?? $this->php_version;
-        $version = max($version, 8.0);
+        $version = (float) max($version, 8.0);
 
         $supportZip = class_exists(ZipArchive::class);
         $microZipFileName = $supportZip ? "php-$version-micro.zip" : "php-$version-micro";
