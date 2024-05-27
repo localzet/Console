@@ -48,6 +48,7 @@ class BuildBinCommand extends BuildPharCommand
     protected ?string $bin_file = null;
 
     protected string $php_ini_file = '';
+    protected string $php_cli_cdn = 'ru-1.cdn.zorin.space';
 
     /**
      * @return void
@@ -73,108 +74,135 @@ class BuildBinCommand extends BuildPharCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->checkEnv();
-
-        $output->writeln('Сборка PHAR...');
-
-        $version = $input->getArgument('version');
-        if (!$version) {
-            $version = $this->php_version;
-        }
-
-        $version = $version >= 8.0 ? $version : 8.2;
-        $supportZip = class_exists(ZipArchive::class);
-        $microZipFileName = $supportZip ? "php$version.micro.sfx.zip" : "php$version.micro.sfx";
-
-        $zipFile = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $microZipFileName;
-        $sfxFile = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . "php$version.micro.sfx";
-
         // Упаковка
         parent::execute($input, $output);
 
+        $version = $input->getArgument('version') ?? $this->php_version;
+        $version = max($version, 8.0);
+
+        $supportZip = class_exists(ZipArchive::class);
+        $microZipFileName = $supportZip ? "php-$version-micro.zip" : "php-$version-micro";
+
+        $zipFile = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $microZipFileName;
+        $sfxFile = rtrim($this->output_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . "php-$version-micro";
+
         // Загрузка micro.sfx.zip
         if (!is_file($sfxFile) && !is_file($zipFile)) {
-            $domain = 'download.workerman.net';
             $output->writeln("\r\nЗагрузка PHP v$version ...");
-            if (extension_loaded('openssl')) {
-                $client = stream_socket_client("ssl://$domain:443",
-                    context: stream_context_create([
-                        'ssl' => [
-                            'verify_peer' => false,
-                            'verify_peer_name' => false,
-                        ]
-                    ])
-                );
-            } else {
-                $client = stream_socket_client("tcp://$domain:80");
+
+            $context = stream_context_create([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ]
+            ]);
+
+            $client = @stream_socket_client("ssl://$this->php_cli_cdn:443", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $context);
+            unset($context);
+            if (!$client) {
+                $output->writeln("Ошибка подключения: $errstr ($errno)");
+                return self::FAILURE;
             }
 
-            fwrite($client, "GET /php/$microZipFileName HTTP/1.0\r\nAccept: text/html\r\nHost: $domain\r\nUser-Agent: localzet/Console\r\n\r\n");
+            fwrite($client, "GET /php/$microZipFileName HTTP/1.1\r\nAccept: text/html\r\nHost: $this->php_cli_cdn\r\nUser-Agent: localzet/Console\r\n\r\n");
             $bodyLength = 0;
-            $bodyBuffer = '';
+            $file = fopen($zipFile, 'w');
             $lastPercent = 0;
-            while (true) {
+            while (!feof($client)) {
                 $buffer = fread($client, 65535);
-                if ($buffer !== false) {
-                    $bodyBuffer .= $buffer;
-                    if (!$bodyLength && $pos = strpos($bodyBuffer, "\r\n\r\n")) {
-                        if (!preg_match('/Content-Length: (\d+)\r\n/', $bodyBuffer, $match)) {
-                            $output->writeln("Ошибка загрузки php$version.micro.sfx.zip");
-                            return self::FAILURE;
-                        }
-                        $firstLine = substr($bodyBuffer, 9, strpos($bodyBuffer, "\r\n") - 9);
-                        if (!str_contains($bodyBuffer, '200 ')) {
-                            $output->writeln("Ошибка загрузки php$version.micro.sfx.zip, $firstLine");
-                            return self::FAILURE;
-                        }
-                        $bodyLength = (int)$match[1];
-                        $bodyBuffer = substr($bodyBuffer, $pos + 4);
-                    }
+                if ($buffer === false) {
+                    $output->writeln("Ошибка чтения данных: $php_errormsg");
+                    return self::FAILURE;
                 }
-                $receiveLength = strlen($bodyBuffer);
+
+                if ($bodyLength) {
+                    fwrite($file, $buffer);
+                } else if ($pos = strpos($buffer, "\r\n\r\n")) {
+                    if (!preg_match('/Content-Length: (\d+)\r\n/', $buffer, $match)) {
+                        $output->writeln("Ошибка загрузки php-$version-micro.zip");
+                        return self::FAILURE;
+                    }
+
+                    $firstLine = substr($buffer, 9, strpos($buffer, "\r\n") - 9);
+                    if (!str_contains($buffer, '200 ')) {
+                        $output->writeln("Ошибка загрузки php-$version-micro.zip, $firstLine");
+                        return self::FAILURE;
+                    }
+
+                    $bodyLength = (int)$match[1];
+                    fwrite($file, substr($buffer, $pos + 4));
+                }
+
+                $receiveLength = ftell($file);
                 $percent = ceil($receiveLength * 100 / $bodyLength);
                 if ($percent != $lastPercent) {
                     echo '[' . str_pad('', (int)$percent, '=') . '>' . str_pad('', 100 - (int)$percent) . "$percent%]";
                     echo $percent < 100 ? "\r" : "\n";
                 }
+
                 $lastPercent = $percent;
                 if ($bodyLength && $receiveLength >= $bodyLength) {
-                    file_put_contents($zipFile, $bodyBuffer);
                     break;
                 }
-                if ($buffer === false || !is_resource($client) || feof($client)) {
-                    $output->writeln("Ошибка загрузки PHP $version ...");
-                    return self::FAILURE;
-                }
             }
+            fclose($file);
+            fclose($client);
+            unset($client, $lastPercent, $bodyLength);
         } else {
-            $output->writeln("\r\nИспользуем PHP $version ...");
+            $output->writeln("\r\nПодключение PHP v$version ...");
         }
+        unset($version, $microZipFileName);
 
         // Распаковка
         if (!is_file($sfxFile) && $supportZip) {
             $zip = new ZipArchive;
-            $zip->open($zipFile, ZipArchive::CHECKCONS);
-            $zip->extractTo($this->output_dir);
+            $res = $zip->open($zipFile);
+            if ($res === true) {
+                $zip->extractTo($this->output_dir);
+                $zip->close();
+                unlink($zipFile);
+                unset($zip);
+            } else {
+                $output->writeln("Не удалось открыть архив: $res");
+                return self::FAILURE;
+            }
         }
+        unset($supportZip, $zipFile);
+
+        $output->writeln('Сборка BIN ...');
 
         // Создание бинарника
-        file_put_contents($this->bin_file, file_get_contents($sfxFile));
+        if (!copy($sfxFile, $this->bin_file)) {
+            $output->writeln("Ошибка копирования файла: $php_errormsg");
+            return self::FAILURE;
+        }
+        unset($sfxFile);
 
         // Пользовательский INI-файл
         if (!empty($this->php_ini)) {
             if (file_exists($this->php_ini_file)) {
                 unlink($this->php_ini_file);
             }
+
             $f = fopen($this->php_ini_file, 'wb');
+            if (!$f) {
+                $output->writeln("Ошибка открытия файла: $php_errormsg");
+                return self::FAILURE;
+            }
+
             fwrite($f, "\xfd\xf6\x69\xe6");
             fwrite($f, pack('N', strlen($this->php_ini)));
             fwrite($f, $this->php_ini);
             fclose($f);
+            unset($f);
+
             file_put_contents($this->bin_file, file_get_contents($this->php_ini_file), FILE_APPEND);
             unlink($this->php_ini_file);
         }
+
+        // PHAR-файл
         file_put_contents($this->bin_file, file_get_contents($this->phar_file), FILE_APPEND);
+        unlink($this->phar_file);
 
         // Добавим права на выполнение
         chmod($this->bin_file, 0755);

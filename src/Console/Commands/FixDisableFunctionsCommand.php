@@ -115,12 +115,14 @@ class FixDisableFunctionsCommand extends Command
         $php_ini_content = preg_replace("/\ndisable_functions *?=[^\n]+/", "\ndisable_functions = $new_disable_functions_str", $php_ini_content);
 
         file_put_contents($php_ini_file, $php_ini_content);
+        unset($php_ini_content, $disable_functions);
 
         foreach ($disable_functions_removed as $func) {
             $output->write('Функция ');
             $output->write(str_pad($func, 30));
             $output->writeln('<info>активирована</info>');
         }
+        unset($disable_functions_removed);
 
         $output->writeln('<info>Готово!</info>');
         return self::SUCCESS;

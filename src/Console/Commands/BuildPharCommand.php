@@ -105,29 +105,35 @@ class BuildPharCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        // Проверка наличия необходимых параметров
         if (!$this->input_dir) throw new RuntimeException('Для сборки нужен каталог с входными данными (build.input_dir)');
         if (!$this->output_dir) throw new RuntimeException('Для сборки нужен каталог для выходных данных (build.output_dir)');
         if (!$this->phar_stub) throw new RuntimeException('Для сборки нужен файл инициализации (build.phar_stub), он будет вызываться при обращении к phar');
 
         $this->checkEnv();
 
+        // Создание выходного каталога, если он не существует
         if (!file_exists($this->output_dir) && !is_dir($this->output_dir)) {
             if (!mkdir($this->output_dir, 0777, true)) {
                 throw new RuntimeException("Не удалось создать выходной каталог phar-файла. Пожалуйста, проверьте разрешения.");
             }
         }
 
+        // Удаление существующего phar-файла, если он существует
         if ($this->phar_file && file_exists($this->phar_file)) {
             unlink($this->phar_file);
         }
 
+        $output->writeln('Сборка PHAR ...');
         $phar = new Phar($this->phar_file, 0, $this->phar_alias);
         $phar->startBuffering();
 
+        // Проверка алгоритма подписи
         if (!in_array($this->signature_algorithm, [Phar::MD5, Phar::SHA1, Phar::SHA256, Phar::SHA512, Phar::OPENSSL])) {
             throw new RuntimeException('Доступные алгоритмы подписи: Phar::MD5, Phar::SHA1, Phar::SHA256, Phar::SHA512, и Phar::OPENSSL.');
         }
 
+        // Установка алгоритма подписи
         if ($this->signature_algorithm === Phar::OPENSSL) {
             if (!file_exists($this->private_key_file)) {
                 throw new RuntimeException("Если вы выбрали алгоритм Phar::OPENSSL - необходимо задать файл закрытого ключа (build.private_key_file).");
@@ -137,22 +143,26 @@ class BuildPharCommand extends Command
             $pkey = '';
             openssl_pkey_export($private, $pkey);
             $phar->setSignatureAlgorithm($this->signature_algorithm, $pkey);
+            unset($private, $pkey);
         } else {
             $phar->setSignatureAlgorithm($this->signature_algorithm);
         }
 
+        // Сборка phar-архива
         $phar->buildFromDirectory($this->input_dir, $this->exclude_pattern);
 
-        // Исключаем соответствующие файлы
+        // Исключение ненужных файлов
         $exclude_files = $this->getExcludeFiles();
         foreach ($exclude_files as $file) {
             if ($phar->offsetExists($file)) {
                 $phar->delete($file);
             }
         }
+        unset($exclude_files);
 
         $output->writeln('Сбор файлов завершен, начинаю добавлять файлы в PHAR.');
 
+        // Установка заглушки
         $phar->setStub("#!/usr/bin/env php
 <?php
 define('IN_PHAR', true);
@@ -163,8 +173,9 @@ __HALT_COMPILER();
 
         $output->writeln('Запись файлов в PHAR архив и сохранение изменений.');
 
+        // Завершение буферизации и освобождение ресурсов
         $phar->stopBuffering();
-        unset($phar);
+        unset($phar, $output);
         return self::SUCCESS;
     }
 
