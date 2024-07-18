@@ -82,7 +82,7 @@ class BuildPharCommand extends Command
     {
         if (!$this->config('build')) $this->setHidden();
 
-        $this->input_dir = $this->config('build.input_dir');
+        $this->input_dir = $this->config('build.input_dir', realpath(InstalledVersions::getRootPackage()['install_path']));
         $this->output_dir = $this->config('build.output_dir', rtrim($this->input_dir, '/') . '/build');
 
         $this->phar_alias = $this->config('build.phar_alias', 'localzet');
