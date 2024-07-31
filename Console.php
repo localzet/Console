@@ -35,7 +35,6 @@ use localzet\Console\Commands\ListCommand;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
-use RuntimeException;
 use SplFileInfo;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputArgument;

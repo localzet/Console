@@ -30,5 +30,5 @@ $config = [
     ],
 ];
 
-$console = new \localzet\Console($config);
+$console = new localzet\Console($config);
 $console->run();

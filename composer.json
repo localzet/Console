@@ -21,8 +21,8 @@
   },
   "autoload": {
     "psr-4": {
-      "localzet\\": "src",
-      "localzet\\Console\\": "src/Console"
+      "localzet\\": "",
+      "localzet\\Console\\": "src"
     }
   },
   "require": {
