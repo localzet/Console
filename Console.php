@@ -59,7 +59,7 @@ class Console extends Application
 
     public function installInternalCommands(): void
     {
-        $this->installCommands(rtrim(InstalledVersions::getInstallPath('localzet/console'), '/') . '/src/Console/Commands', 'localzet\\Console\\Commands');
+        $this->installCommands(rtrim(InstalledVersions::getInstallPath('localzet/console'), '/') . '/src/Commands', 'localzet\\Console\\Commands');
     }
 
     protected function getDefaultCommands(): array
