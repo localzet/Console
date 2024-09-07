@@ -28,14 +28,59 @@ declare(strict_types=1);
 
 namespace localzet\Console\Commands;
 
+use Exception;
+use Illuminate\Support\Traits\Macroable;
+use localzet\Console\Components\Factory;
+use localzet\Console\OutputStyle;
+use RuntimeException;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
+
 abstract class Command extends \Symfony\Component\Console\Command\Command
 {
+    use Concerns\CallsCommands,
+        Concerns\ConfiguresPrompts,
+        Concerns\HasParameters,
+        Concerns\InteractsWithIO,
+        Concerns\InteractsWithSignals,
+        Concerns\PromptsForMissingInput,
+        Macroable;
+
     protected static string $defaultName;
     protected static string $defaultDescription;
 
+    protected $name;
+    protected $description;
+    protected $help;
+    protected $hidden = false;
+    protected $aliases;
+
+    /**
+     * @var Factory
+     */
+    protected $components;
+
+    /**
+     * @var InputInterface
+     */
+    protected $input;
+
+    /**
+     * @var OutputInterface|OutputStyle
+     */
+    protected $output;
+
     public function __construct(protected array $config = [])
     {
-        parent::__construct();
+        parent::__construct($this->name);
+        if ($this->description) $this->setDescription((string)$this->description);
+
+        $this->setHelp((string)$this->help);
+        $this->setHidden($this->hidden);
+        if ($this->aliases) $this->setAliases((array)$this->aliases);
+
     }
 
     public static function getDefaultName(): ?string
@@ -69,5 +114,70 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
         }
 
         return $value;
+    }
+
+
+    #[\Override]
+    public function run(InputInterface $input, OutputInterface $output): int
+    {
+        $this->output = $output instanceof OutputStyle ? $output : new OutputStyle($input, $output);
+        $this->components = new Factory($output);
+
+        return parent::run($input, $output);
+    }
+
+    #[\Override]
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $method = method_exists($this, 'handle') ? 'handle' : '__invoke';
+
+        try {
+            return (int)$this->$method;
+        } catch (Exception $e) {
+            $this->components->error($e->getMessage());
+            return static::FAILURE;
+        }
+    }
+
+    protected function resolveCommand($command)
+    {
+        if (is_string($command)) {
+            if (!class_exists($command)) {
+                return $this->getApplication()->find($command);
+            }
+        }
+
+        if ($command instanceof SymfonyCommand) {
+            $command->setApplication($this->getApplication());
+        }
+
+        return $command;
+    }
+
+    public function fail(Throwable|string|null $exception = null)
+    {
+        if (is_null($exception)) {
+            $exception = 'Ошибка команды.';
+        }
+
+        if (is_string($exception)) {
+            $exception = new RuntimeException($exception);
+        }
+
+        throw $exception;
+    }
+
+    #[\Override]
+    public function isHidden(): bool
+    {
+        return $this->hidden;
+    }
+
+    #[\Override]
+    public function setHidden(bool $hidden = true): static
+    {
+        parent::setHidden($this->hidden = $hidden);
+
+        return $this;
     }
 }

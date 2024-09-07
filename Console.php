@@ -54,6 +54,10 @@ class Console extends Application
             $this->config['version'] ?? InstalledVersions::getPrettyVersion('localzet/console')
         );
 
+
+        $this->setAutoExit(false);
+        $this->setCatchExceptions(false);
+
         $installInternalCommands && $this->installInternalCommands();
     }
 
