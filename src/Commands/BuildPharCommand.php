@@ -125,19 +125,12 @@ class BuildPharCommand extends Command
         if (!$this->output_dir)
             throw new RuntimeException('Для сборки нужен каталог для выходных данных (build.output_dir)');
         if (!is_dir($this->output_dir))
-            throw new RuntimeException('Каталог для выходных данными (build.output_dir) не существует');
+            if (!mkdir($this->output_dir, 0777, true)) throw new RuntimeException("Не удалось создать выходной каталог phar-файла. Пожалуйста, проверьте разрешения.");
 
         if ($this->phar_stub && !file_exists($this->input_dir . DIRECTORY_SEPARATOR . $this->phar_stub))
             throw new RuntimeException('Файл инициализации (build.phar_stub) не существует');
 
         $this->checkEnv();
-
-        // Создание выходного каталога, если он не существует
-        if (!file_exists($this->output_dir) && !is_dir($this->output_dir)) {
-            if (!mkdir($this->output_dir, 0777, true)) {
-                throw new RuntimeException("Не удалось создать выходной каталог phar-файла. Пожалуйста, проверьте разрешения.");
-            }
-        }
 
         // Удаление существующего phar-файла, если он существует
         if ($this->phar_file && file_exists($this->phar_file)) {
