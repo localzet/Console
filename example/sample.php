@@ -15,16 +15,14 @@ $config = [
 
         'phar_alias' => 'localzet',
         'phar_filename' => 'localzet.phar',
-        'phar_stub' => 'example/sample.php', // Файл для require. Относительный путь, от корня `input_dir`
+        'phar_stub' => 'stub.php', // Файл для require. Относительный путь, от корня `input_dir`
 
         'signature_algorithm' => Phar::SHA256, // Phar::MD5, Phar::SHA1, Phar::SHA256, Phar::SHA512, Phar::OPENSSL.
         'private_key_file' => '', // Для Phar::OPENSSL
 
         // Для бинарной сборки:
-        'php_version' => 8.2,
-        'custom_ini' => '
-        memory_limit = 256M
-        ',
+        'php_version' => 8.3,
+        'custom_ini' => 'memory_limit = 256M',
 
         'bin_filename' => 'localzet',
     ],

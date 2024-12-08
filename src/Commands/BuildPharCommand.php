@@ -82,14 +82,25 @@ class BuildPharCommand extends Command
     {
         if (!$this->config('build')) $this->setHidden();
 
-        $this->input_dir = $this->config('build.input_dir', realpath(InstalledVersions::getRootPackage()['install_path']));
-        $this->output_dir = $this->config('build.output_dir', rtrim($this->input_dir, '/') . '/build');
+        if ($this->config('build.input_dir')) {
+            $this->input_dir = $this->config('build.input_dir');
+        } else {
+            if ($pharPath = class_exists(Phar::class, false) ? Phar::running(false) : null) {
+                $this->input_dir = dirname($pharPath);
+            } else if ($installPath = InstalledVersions::getRootPackage()['install_path'] ?? null) {
+                $installPath = str_starts_with($installPath, 'phar://') ? $installPath : realpath($installPath);
+                if (!$installPath) throw new RuntimeException('Для сборки нужен каталог с входными данными (build.input_dir)');
+                $this->input_dir = $installPath;
+            } else throw new RuntimeException('Для сборки нужен каталог с входными данными (build.input_dir)');
+        }
+
+        $this->output_dir = $this->config('build.output_dir', rtrim($this->input_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'build');
 
         $this->phar_alias = $this->config('build.phar_alias', 'localzet');
         $this->phar_filename = $this->config('build.phar_filename', 'localzet.phar');
-        $this->phar_stub = $this->config('build.phar_stub', 'master');
+        $this->phar_stub = $this->config('build.phar_stub', 'stub.php');
 
-        $this->exclude_files = $this->config('build.exclude_files', ['.env', 'LICENSE', 'composer.json', 'composer.lock', $this->config('build.phar_filename', 'localzet.phar'), $this->config('build.bin_filename', 'localzet')]);
+        $this->exclude_files = $this->config('build.exclude_files', ['.env', 'LICENSE', 'composer.json', 'composer.lock', $this->phar_filename, $this->config('build.bin_filename', 'localzet')]);
         $this->exclude_pattern = $this->config('build.exclude_pattern', '#^(?!.*(composer.json|/.github/|/.idea/|/.git/|/.setting/|/runtime/|/vendor-bin/|/build/))(.*)$#');
 
         $this->signature_algorithm = $this->config('build.signature_algorithm', Phar::SHA256);
@@ -106,9 +117,18 @@ class BuildPharCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Проверка наличия необходимых параметров
-        if (!$this->input_dir) throw new RuntimeException('Для сборки нужен каталог с входными данными (build.input_dir)');
-        if (!$this->output_dir) throw new RuntimeException('Для сборки нужен каталог для выходных данных (build.output_dir)');
-        if (!$this->phar_stub) throw new RuntimeException('Для сборки нужен файл инициализации (build.phar_stub), он будет вызываться при обращении к phar');
+        if (!$this->input_dir)
+            throw new RuntimeException('Для сборки нужен каталог с входными данными (build.input_dir)');
+        if (!is_dir($this->input_dir))
+            throw new RuntimeException('Каталог с входными данными (build.input_dir) не существует');
+
+        if (!$this->output_dir)
+            throw new RuntimeException('Для сборки нужен каталог для выходных данных (build.output_dir)');
+        if (!is_dir($this->output_dir))
+            throw new RuntimeException('Каталог для выходных данными (build.output_dir) не существует');
+
+        if ($this->phar_stub && !file_exists($this->input_dir . DIRECTORY_SEPARATOR . $this->phar_stub))
+            throw new RuntimeException('Файл инициализации (build.phar_stub) не существует');
 
         $this->checkEnv();
 
@@ -167,7 +187,7 @@ class BuildPharCommand extends Command
 <?php
 define('IN_PHAR', true);
 Phar::mapPhar('$this->phar_alias');
-require 'phar://$this->phar_alias/$this->phar_stub';
+" . ($this->phar_stub ? "require 'phar://$this->phar_alias/$this->phar_stub';" : "") . "
 __HALT_COMPILER();
 ");
 
