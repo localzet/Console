@@ -14,7 +14,7 @@ class DownloadPhpCommand extends Command
 
     protected string $php_cli_cdn = 'ru-1.cdn.zorin.space';
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->addArgument('version', InputArgument::OPTIONAL, 'Версия PHP (>=8.0)');
         $this->addArgument('output', InputArgument::OPTIONAL, 'Путь для сохранения файла');
