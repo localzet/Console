@@ -122,7 +122,7 @@ class Console extends Application
             }
 
             if (is_a($class_name, Command::class, true)) {
-                $this->add(new $class_name($this->config));
+                $this->addCommand(new $class_name($this->config));
                 continue;
             }
 

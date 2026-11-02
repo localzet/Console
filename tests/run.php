@@ -74,6 +74,9 @@ $symfonyTester = new CommandTester($app->find('test:symfony'));
 $symfonyTester->execute([]);
 check(str_contains($symfonyTester->getDisplay(), 'symfony-ok'), 'Symfony command runs through Localzet Console');
 
+$defaultApp = new Console();
+check($defaultApp->has('list') && $defaultApp->has('help'), 'Internal commands install on the default application');
+
 $container = new class extends Container {
     public function runningUnitTests(): bool { return true; }
 };
