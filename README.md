@@ -1,21 +1,71 @@
-<p align="center"><a href="https://www.localzet.com" target="_blank">
-  <img src="https://static.zorin.space/media/logos/ZorinProjectsSP.svg" width="400">
-</a></p>
+# Localzet Console
 
-<p align="center">
-  <a href="https://packagist.org/packages/localzet/console">
-  <img src="https://img.shields.io/packagist/dt/localzet/console?label=%D0%A1%D0%BA%D0%B0%D1%87%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F" alt="Скачивания">
-</a>
-  <a href="https://github.com/localzet/Console">
-  <img src="https://img.shields.io/github/commit-activity/t/localzet/Console?label=%D0%9A%D0%BE%D0%BC%D0%BC%D0%B8%D1%82%D1%8B" alt="Коммиты">
-</a>
-  <a href="https://packagist.org/packages/localzet/console">
-  <img src="https://img.shields.io/packagist/v/localzet/console?label=%D0%92%D0%B5%D1%80%D1%81%D0%B8%D1%8F" alt="Версия">
-</a>
-  <a href="https://packagist.org/packages/localzet/console">
-  <img src="https://img.shields.io/packagist/dependency-v/localzet/console/php?label=PHP" alt="Версия PHP">
-</a>
-  <a href="https://github.com/localzet/Console">
-  <img src="https://img.shields.io/github/license/localzet/Console?label=%D0%9B%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F" alt="Лицензия">
-</a>
-</p>
+Localzet Console is a PHP command-line application layer built on Symfony Console. It keeps Symfony commands as its default API, adds an optional bridge for Laravel Artisan commands, and provides small Unicode and ANSI utilities for terminal interfaces.
+
+## Requirements
+
+- PHP 8.4.1 or newer
+- Composer 2
+
+The package tracks Symfony Console 8.1 and Illuminate Console 13. The PHP requirement follows Symfony Console 8.1.
+
+## Installation
+
+```sh
+composer require localzet/console
+```
+
+## Create an application
+
+```php
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+$console = new localzet\Console\Console([
+    'name' => 'Example CLI',
+    'version' => '1.0.0',
+]);
+
+exit($console->run());
+```
+
+Commands extending `localzet\Console\Commands\Command` receive the application config array in their constructor. Their static `$defaultName` and `$defaultDescription` define Symfony command metadata. Use `installCommands($directory, $namespace)` to discover commands from an application directory.
+
+## Laravel command bridge
+
+Symfony remains the default application and command API. To register Illuminate commands, explicitly provide the Laravel container and event dispatcher:
+
+```php
+$console->useIlluminate($laravelApplication);
+$console->addIlluminateCommand(new App\Console\Commands\ExampleCommand());
+```
+
+Illuminate commands use Laravel's command lifecycle and therefore need a bootstrapped Laravel application. They can also be discovered with `installCommands()` after `useIlluminate()` has been configured.
+
+## Terminal helpers
+
+`localzet\Console\Tui\Utf8` measures terminal cell width, clips ANSI-styled lines without splitting wide characters, pads output, and removes control sequences from untrusted text. `localzet\Console\Tui\Terminal` provides an opt-in `/dev/tty` full-screen renderer. It requires an interactive Unix terminal; call `close()` in `finally` so terminal settings are restored.
+
+```php
+$terminal = new localzet\Console\Tui\Terminal();
+$terminal->open();
+try {
+    $terminal->draw(['Localzet Console']);
+} finally {
+    $terminal->close();
+}
+```
+
+## Verification
+
+```sh
+composer install
+composer run check
+```
+
+The test suite exercises Symfony and Illuminate command execution and terminal text handling. It does not claim to emulate a real terminal; interactive rendering should also be checked in the target terminal emulator.
+
+## License
+
+AGPL-3.0-or-later. See [LICENSE](LICENSE).

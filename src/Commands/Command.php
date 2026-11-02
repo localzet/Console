@@ -35,7 +35,10 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
 
     public function __construct(protected array $config = [])
     {
-        parent::__construct();
+        parent::__construct(static::getDefaultName());
+        if (static::getDefaultDescription() !== null) {
+            $this->setDescription(static::getDefaultDescription());
+        }
     }
 
     public static function getDefaultName(): ?string
