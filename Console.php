@@ -32,6 +32,7 @@ use Composer\InstalledVersions;
 use localzet\Console\Commands\Command;
 use localzet\Console\Commands\HelpCommand;
 use localzet\Console\Commands\ListCommand;
+use Illuminate\Contracts\Container\Container as ContainerContract;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -46,6 +47,7 @@ use Symfony\Component\Console\Input\InputOption;
  */
 class Console extends Application
 {
+    private ?ContainerContract $container = null;
 
     public function __construct(protected array $config = [], bool $installInternalCommands = true)
     {
@@ -55,6 +57,24 @@ class Console extends Application
         );
 
         $installInternalCommands && $this->installInternalCommands();
+    }
+
+    /** Enable Laravel container integration and Laravel command discovery. */
+    public function useIlluminate(ContainerContract $container): self
+    {
+        $this->container = $container;
+        return $this;
+    }
+
+    /** Register a Laravel command with the configured container. */
+    public function addIlluminateCommand(\Illuminate\Console\Command $command): ?\Symfony\Component\Console\Command\Command
+    {
+        if ($this->container === null) {
+            throw new \LogicException('Call useIlluminate() before adding Illuminate commands.');
+        }
+
+        $command->setLaravel($this->container);
+        return $this->addCommand($command);
     }
 
     public function installInternalCommands(): void
@@ -92,7 +112,7 @@ class Console extends Application
             $realNamespace = str_replace('/', '\\', $realNamespace);
             // app\command\doc\def
             $class_name = trim($realNamespace . '\\' . $file->getBasename('.php'), '\\');
-            if (!class_exists($class_name) || !is_a($class_name, Command::class, true)) {
+            if (!class_exists($class_name) || (!is_a($class_name, Command::class, true) && !($this->container !== null && is_a($class_name, \Illuminate\Console\Command::class, true)))) {
                 continue;
             }
 
@@ -101,8 +121,12 @@ class Console extends Application
                 continue;
             }
 
-            $command = new $class_name($this->config);
-            $this->add($command);
+            if (is_a($class_name, Command::class, true)) {
+                $this->add(new $class_name($this->config));
+                continue;
+            }
+
+            $this->addIlluminateCommand($this->container->make($class_name));
         }
     }
 

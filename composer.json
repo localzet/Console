@@ -26,10 +26,17 @@
     }
   },
   "require": {
-    "symfony/console": ">=5.0"
+    "php": ">=8.4.1",
+    "symfony/console": "^8.1.10",
+    "illuminate/console": "^13.39"
   },
   "suggest": {
     "ext-zip": "For build bin",
     "ext-openssl": "For build phar (Phar::OPENSSL)"
+  },
+  "scripts": {
+    "test": "php tests/run.php",
+    "lint": "find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
+    "check": ["@lint", "@test"]
   }
 }
