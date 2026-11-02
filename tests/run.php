@@ -30,6 +30,7 @@ use Illuminate\Console\Command as IlluminateCommand;
 use Illuminate\Container\Container;
 use localzet\Console;
 use localzet\Console\Commands\Command;
+use localzet\Console\Tui\Dashboard;
 use localzet\Console\Tui\Utf8;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -99,5 +100,20 @@ check(Utf8::width('界') === 2, 'Wide CJK glyph occupies two terminal cells');
 check(Utf8::width("\033[31mтест\033[0m") === 4, 'ANSI styling does not affect terminal width');
 check(Utf8::width(Utf8::clipAnsi('界界x', 3)) === 2, 'ANSI clipping never splits a wide glyph');
 check(!str_contains(Utf8::clean("safe\033]0;title\007text"), "\033"), 'Untrusted terminal control sequences are removed');
+
+$dashboard = new Dashboard();
+$lines = $dashboard->render(
+    "Runtime\033]0;untrusted\007",
+    ['CPU' => ['value' => '42%', 'percent' => 101, 'detail' => '8 cores']],
+    ['Workers' => ['worker A ready', 'worker B ready']],
+    'Q quit · R refresh',
+    60,
+    10
+);
+check(count($lines) === 10, 'Dashboard rendering respects the terminal height');
+check(array_reduce($lines, static fn(bool $valid, string $line): bool => $valid && Utf8::width($line) === 60, true), 'Dashboard rows fit the terminal width');
+$plainDashboard = Utf8::clean(implode("\n", $lines));
+check(str_contains($plainDashboard, 'Runtime') && !str_contains($plainDashboard, 'untrusted'), 'Dashboard strips terminal control sequences from titles');
+check(str_contains($plainDashboard, 'worker A ready') && str_contains($plainDashboard, 'Q quit'), 'Dashboard renders sections and a footer');
 
 echo "All Console integration checks passed.\n";
