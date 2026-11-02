@@ -35,7 +35,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
 /**
- * @author walkor <walkor@workerman.net>
  * @author Ivan Zorin <ivan@zorin.space>
  */
 class ConnectionsCommand extends Command

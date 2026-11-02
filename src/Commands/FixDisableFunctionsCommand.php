@@ -32,7 +32,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * @author walkor <walkor@workerman.net>
  * @author Ivan Zorin <ivan@zorin.space>
  */
 class FixDisableFunctionsCommand extends Command
