@@ -45,13 +45,22 @@ Illuminate commands use Laravel's command lifecycle and therefore need a bootstr
 
 ## Terminal helpers
 
-`localzet\Console\Tui\Utf8` measures terminal cell width, clips ANSI-styled lines without splitting wide characters, pads output, and removes control sequences from untrusted text. `localzet\Console\Tui\Terminal` provides an opt-in `/dev/tty` full-screen renderer. It requires an interactive Unix terminal; call `close()` in `finally` so terminal settings are restored.
+`localzet\Console\Tui\Utf8` measures terminal cell width, clips ANSI-styled lines without splitting wide characters, pads output, and removes control sequences from untrusted text. `Dashboard` renders bounded pseudographic panels with metrics, gauges, sections and a footer; pass its lines to `Terminal::draw()`. `Terminal` provides an opt-in `/dev/tty` full-screen renderer for interactive Unix terminals; call `close()` in `finally` so terminal settings are restored.
 
 ```php
 $terminal = new localzet\Console\Tui\Terminal();
+$dashboard = new localzet\Console\Tui\Dashboard();
 $terminal->open();
 try {
-    $terminal->draw(['Localzet Console']);
+    [$width, $height] = $terminal->size();
+    $terminal->draw($dashboard->render(
+        'Localzet Console',
+        ['CPU' => ['value' => '42%', 'percent' => 42, 'detail' => '8 cores']],
+        ['Workers' => ['worker A ready', 'worker B ready']],
+        'Q quit · R refresh',
+        $width,
+        $height
+    ));
 } finally {
     $terminal->close();
 }
@@ -64,7 +73,7 @@ composer install
 composer run check
 ```
 
-The test suite exercises Symfony and Illuminate command execution and terminal text handling. It does not claim to emulate a real terminal; interactive rendering should also be checked in the target terminal emulator.
+The test suite exercises Symfony and Illuminate command execution, terminal text handling and dashboard layout bounds. It does not claim to emulate a real terminal; interactive rendering should also be checked in the target terminal emulator.
 
 ## License
 
