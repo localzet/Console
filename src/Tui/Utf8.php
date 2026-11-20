@@ -38,6 +38,7 @@ final class Utf8
     public static function clean(string $value): string
     {
         $value = self::stripAnsi($value);
+        $value = preg_replace('/[\r\n\t]+/', ' ', $value) ?? '';
         return preg_replace('/[\x00-\x08\x0b-\x1f\x7f]/', '?', $value) ?? '';
     }
 
@@ -52,8 +53,16 @@ final class Utf8
         $cells = 0;
         foreach ($matches[0] ?? [] as $token) {
             if (str_starts_with($token, "\033[")) {
-                $output .= $token;
+                if (preg_match('/^\033\[[0-9;:]*m$/', $token) === 1) {
+                    $output .= $token;
+                }
                 continue;
+            }
+
+            if ($token === "\r" || $token === "\n" || $token === "\t") {
+                $token = ' ';
+            } elseif (strlen($token) === 1 && ord($token) < 0x20) {
+                $token = '?';
             }
 
             $tokenWidth = function_exists('mb_strwidth') ? mb_strwidth($token, 'UTF-8') : 1;

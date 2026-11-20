@@ -37,6 +37,11 @@ final class Terminal
 
     public function open(): void
     {
+        if ($this->active) {
+            return;
+        }
+
+        $this->lastLines = [];
         $this->tty = @fopen('/dev/tty', 'r+');
         if (!is_resource($this->tty)) {
             throw new \RuntimeException('Interactive mode requires a terminal.');
