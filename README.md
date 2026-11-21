@@ -34,7 +34,7 @@ Commands extending `localzet\Console\Commands\Command` receive the application c
 
 ## Laravel command bridge
 
-Symfony remains the default application and command API. To register Illuminate commands, explicitly provide the Laravel container and event dispatcher:
+Symfony remains the default application and command API. To register Illuminate commands, pass a bootstrapped Laravel application or container that implements `ContainerContract` and provides the bindings required by the commands:
 
 ```php
 $console->useIlluminate($laravelApplication);
