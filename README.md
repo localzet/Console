@@ -66,6 +66,8 @@ try {
 }
 ```
 
+When Localzet Server is installed, `status --live` opens a full-screen server dashboard. It reads the current CLI entry point's `status --json` output once per second; press `Q` to exit or `R` to refresh immediately. The one-shot `status --json` command remains suitable for scripts and monitoring agents.
+
 ## Verification
 
 ```sh
@@ -73,7 +75,7 @@ composer install
 composer run check
 ```
 
-The test suite exercises Symfony and Illuminate command execution, terminal text handling and dashboard layout bounds. It does not claim to emulate a real terminal; interactive rendering should also be checked in the target terminal emulator.
+The test suite exercises Symfony and Illuminate command execution, terminal text handling and dashboard layout bounds. On Linux with util-linux `script`, it also runs the live status command in a pseudo-terminal. Check final colors and glyphs in the target terminal emulator.
 
 ## License
 
