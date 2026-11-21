@@ -109,6 +109,17 @@ final class Terminal
         );
     }
 
+    /** Read pending bytes from the interactive terminal without blocking. */
+    public function readInput(): string
+    {
+        if (!is_resource($this->tty)) {
+            return '';
+        }
+
+        $input = fread($this->tty, 64);
+        return is_string($input) ? $input : '';
+    }
+
     private function write(string $data): void
     {
         if (is_resource($this->tty) && $data !== '') {

@@ -29,8 +29,10 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use Illuminate\Console\Command as IlluminateCommand;
 use Illuminate\Container\Container;
 use localzet\Console;
+use localzet\Console\Commands\StatusCommand;
 use localzet\Console\Commands\Command;
 use localzet\Console\Tui\Dashboard;
+use localzet\Console\Tui\ServerStatusDashboard;
 use localzet\Console\Tui\Terminal;
 use localzet\Console\Tui\Utf8;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -78,6 +80,11 @@ check(str_contains($symfonyTester->getDisplay(), 'symfony-ok'), 'Symfony command
 
 $defaultApp = new Console();
 check($defaultApp->has('list') && $defaultApp->has('help'), 'Internal commands install on the default application');
+$statusCommand = new StatusCommand();
+check(
+    $statusCommand->getDefinition()->hasOption('live') && $statusCommand->getDefinition()->hasOption('json'),
+    'Status command exposes live and JSON output modes'
+);
 
 $container = new class extends Container {
     public function runningUnitTests(): bool { return true; }
@@ -125,6 +132,14 @@ check($ttyProperty->getValue($terminal) === $tty, 'Opening an active terminal mu
 check($oldSttyProperty->getValue($terminal) === 'saved-settings', 'Opening an active terminal must not overwrite saved settings');
 fclose($tty);
 
+$inputTerminal = new Terminal();
+$inputTty = fopen('php://memory', 'r+');
+fwrite($inputTty, 'q');
+rewind($inputTty);
+$terminalReflection->getProperty('tty')->setValue($inputTerminal, $inputTty);
+check($inputTerminal->readInput() === 'q', 'Terminal reads pending interactive input');
+fclose($inputTty);
+
 $drawTerminal = new Terminal();
 $drawTerminalReflection = new ReflectionClass($drawTerminal);
 $drawTty = fopen('php://memory', 'r+');
@@ -171,5 +186,35 @@ check(
     array_reduce($unsafeDashboard, static fn(bool $valid, string $line): bool => $valid && Utf8::width($line) === 40, true),
     'Sanitized dashboard rows retain the requested width'
 );
+
+$serverDashboard = new ServerStatusDashboard();
+$serverStatusLines = $serverDashboard->render([
+    'master' => [
+        'running' => true,
+        'state' => 'running',
+        'uptime' => 65,
+        'servers' => [[
+            'id' => 1,
+            'name' => 'api',
+            'listen' => 'tcp://127.0.0.1:8080',
+            'transport' => 'tcp',
+            'configured_workers' => 2,
+            'limits' => ['max_connections' => 100],
+            'workers' => [['pid' => 10], ['pid' => 11]],
+        ]],
+    ],
+    'workers' => [[
+        'connections' => 3,
+        'processed_messages' => 8,
+        'memory' => 1024 * 1024,
+    ]],
+], 60, 12);
+check(count($serverStatusLines) === 12, 'Server status dashboard respects the terminal height');
+check(
+    array_reduce($serverStatusLines, static fn(bool $valid, string $line): bool => $valid && Utf8::width($line) === 60, true),
+    'Server status dashboard fits the terminal width'
+);
+$plainServerStatus = Utf8::clean(implode("\n", $serverStatusLines));
+check(str_contains($plainServerStatus, 'running') && str_contains($plainServerStatus, 'api #1'), 'Server dashboard includes runtime and listener status');
 
 echo "All Console integration checks passed.\n";

@@ -35,7 +35,10 @@
     "ext-openssl": "For build phar (Phar::OPENSSL)"
   },
   "scripts": {
-    "test": "php tests/run.php",
+    "test": [
+      "php tests/run.php",
+      "php tests/terminal_integration.php"
+    ],
     "lint": "find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
     "check": ["@lint", "@test"]
   }
